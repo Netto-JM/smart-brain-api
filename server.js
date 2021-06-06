@@ -1,34 +1,37 @@
-import express from 'express';
-import bcrypt from 'bcrypt';
-import cors from 'cors';
-import knex from 'knex';
-import handleRegister from './controllers/register.js';
-import handleSignin from './controllers/signin.js';
-import handleProfileGet from './controllers/profile.js';
-import { handleImage, handleApiCall } from './controllers/image.js';
+const express = require('express');
+const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt-nodejs');
+const cors = require('cors');
+const knex = require('knex');
+
+const register = require('./controllers/register');
+const signin = require('./controllers/signin');
+const profile = require('./controllers/profile');
+const image = require('./controllers/image');
 
 const db = knex({
+  // connect to your own database here
   client: 'pg',
   connection: {
     host : '127.0.0.1',
-    user : 'postgres',
-    password : 'test',
+    user : 'aneagoie',
+    password : '',
     database : 'smart-brain'
   }
 });
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(cors())
+app.use(bodyParser.json());
 
-app.get('/', (req, res) => { res.send('success') })
-app.post('/signin', handleSignin(db, bcrypt))
-app.post('/register', handleRegister(db, bcrypt))
-app.get('/profile/:id', handleProfileGet(db))
-app.put('/image', handleImage(db))
-app.post('/imageurl', handleApiCall())
+app.get('/', (req, res)=> { res.send(db.users) })
+app.post('/signin', signin.handleSignin(db, bcrypt))
+app.post('/register', (req, res) => { register.handleRegister(req, res, db, bcrypt) })
+app.get('/profile/:id', (req, res) => { profile.handleProfileGet(req, res, db)})
+app.put('/image', (req, res) => { image.handleImage(req, res, db)})
+app.post('/imageurl', (req, res) => { image.handleApiCall(req, res)})
 
-app.listen(3000, () => {
-	console.log('app is running on port 3000');
+app.listen(3000, ()=> {
+  console.log('app is running on port 3000');
 })
